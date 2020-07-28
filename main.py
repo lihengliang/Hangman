@@ -1,6 +1,7 @@
 import pygame
 import os
 import math
+from random_word import RandomWords
 
 # set path
 ROOT = os.path.dirname(__file__)
@@ -21,6 +22,12 @@ for subdir, dirs, files in os.walk(IMG_PATH):
 
 # game variables
 hangman_status = 0
+guess = []
+
+# get random word for game
+r = RandomWords()
+word = r.get_random_word(minLength=6, maxLength=12, hasDictionaryDef="true")
+# word = "TEST"
 
 # button variables
 RADIUS = 20
@@ -36,6 +43,7 @@ for i in range(26):
 
 # fonts
 LETTER_FONT = pygame.font.SysFont('comicsans', 40)
+TITLE_FONT = pygame.font.SysFont('comicsans', 60)
 
 # colours
 WHITE = (255, 255, 255)
@@ -50,6 +58,20 @@ run = True
 def draw():
     window.fill(WHITE)
 
+    # draw title
+    text = TITLE_FONT.render("PYTHON HANGMAN", 1, BLACK)
+    window.blit(text, (WIDTH // 2 - text.get_width() // 2, 20))
+
+    # draw word
+    display_word = ""
+    for char in word:
+        if char in guess:
+            display_word += char + " "
+        else:
+            display_word += "_ "
+    text = LETTER_FONT.render(display_word, 1, BLACK)
+    window.blit(text, (400, 200))
+
     for letter in letters:
         x, y, ltr, visible = letter
         if visible:
@@ -61,10 +83,17 @@ def draw():
     pygame.display.update()
 
 
+def show_msg(msg):
+    pygame.time.delay(1000)
+    window.fill(WHITE)
+    text = LETTER_FONT.render(msg, 1, BLACK)
+    window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+    pygame.display.update()
+    pygame.time.delay(3000)
+
+
 while run:
     clock.tick(FPS)
-
-    draw()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -77,6 +106,24 @@ while run:
                     dis = math.sqrt((x - float(m_x))**2 + (y - int(m_y))**2)
                     if dis < RADIUS:
                         letter[3] = False
+                        guess.append(ltr)
+                        if ltr not in word:
+                            hangman_status += 1
+
+    draw()
+
+    won = True
+    for letter in word:
+        if letter not in guess:
+            won = False
+            break
+    if won:
+        show_msg("YOU WIN")
+        run = False
+
+    if hangman_status == 6:
+        show_msg("YOU LOST")
+        run = False
 
 
 pygame.quit()
